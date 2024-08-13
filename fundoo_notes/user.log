@@ -1,0 +1,94 @@
+2024-08-12 20:29:54,673 - ERROR - Error validating email: cannot access local variable 'e' where it is not associated with a value
+2024-08-12 20:29:54,674 - WARNING - Bad Request: /register/
+2024-08-12 21:13:32,151 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:15:00,477 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:15:06,575 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:15:22,595 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:16:36,649 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:17:38,217 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:17:40,959 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:19:37,852 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:19:41,567 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:19:55,577 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:19:59,683 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:20:02,919 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:20:06,050 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:20:09,191 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:20:11,661 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:21:27,030 - ERROR - Error validating email: cannot access local variable 'e' where it is not associated with a value
+2024-08-12 21:21:27,031 - WARNING - Bad Request: /register/
+2024-08-12 21:21:43,202 - ERROR - Error validating first name and last name: cannot access local variable 'e' where it is not associated with a value
+2024-08-12 21:21:43,203 - WARNING - Bad Request: /register/
+2024-08-12 21:21:57,818 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:22:00,469 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:23:54,495 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:24:06,146 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:24:09,132 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:24:14,953 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:25:15,887 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:25:20,856 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:25:35,824 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:26:13,665 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:26:16,681 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:26:21,467 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:26:24,316 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:26:27,988 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:27:49,655 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:27:53,332 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:28:41,004 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:48:01,364 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:48:24,077 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:48:31,683 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:48:38,848 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-12 21:48:54,663 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\fundoo_notes\urls.py changed, reloading.
+2024-08-12 22:19:42,140 - WARNING - Unauthorized: /login/
+2024-08-12 22:48:57,947 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:47:17,082 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:47:21,236 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:47:25,199 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:49:32,930 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:49:39,822 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:49:55,107 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:50:16,958 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:50:21,870 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:50:32,184 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:50:51,637 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:27,023 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:33,397 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:37,575 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:41,288 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:54,013 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:51:59,507 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:52:04,272 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:52:07,809 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:52:11,894 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:52:15,493 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:52:42,535 - WARNING - Unauthorized: /login/
+2024-08-13 10:52:57,715 - WARNING - Unauthorized: /login/
+2024-08-13 10:53:22,634 - WARNING - Unauthorized: /login/
+2024-08-13 10:54:04,078 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:54:09,280 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:54:12,239 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:54:37,852 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:54:45,525 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:54:54,445 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:04,011 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:08,851 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:23,745 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:28,196 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:33,184 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:37,494 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:55:40,951 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 10:57:12,216 - WARNING - Method Not Allowed (GET): /login/
+2024-08-13 10:57:31,158 - WARNING - Method Not Allowed (GET): /register/
+2024-08-13 11:02:38,726 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:02:56,300 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:03:19,636 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:03:34,078 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:03:53,312 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:04:04,303 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 11:04:06,942 - INFO - C:\Users\siddharth\Desktop\Infostretch\django\fundoo_notes\fundoo_notes\user\views.py changed, reloading.
+2024-08-13 15:48:59,551 - WARNING - Method Not Allowed (GET): /login/
+2024-08-13 15:49:07,055 - WARNING - Method Not Allowed (GET): /login/
+2024-08-13 15:49:08,549 - WARNING - Method Not Allowed (GET): /login/
+2024-08-13 15:49:15,527 - WARNING - Unauthorized: /login/
