@@ -5,6 +5,8 @@ from django.contrib.auth.hashers import make_password
 from .models import User
 import re
 import logging
+from django.contrib.auth import authenticate 
+from rest_framework.exceptions import AuthenticationFailed
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
@@ -16,6 +18,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
+        # User.objects.create_user :hashes the password before storing 
+        #User.objects.create : does not hashes password saves password as plain text thats why i used make_password method
         user = User.objects.create(
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
@@ -26,9 +30,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password']
+        fields = ['id','first_name', 'last_name', 'email', 'password']
 
 
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+    def create(self, validated_data):
+        user = authenticate( email=validated_data['email'], password=validated_data['password'])
+        if not user:
+            raise AuthenticationFailed('Invalid credentials, try again')
+        return user
+        
