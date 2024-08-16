@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import User
 import re
-import logging
+
 from django.contrib.auth import authenticate 
 from rest_framework.exceptions import AuthenticationFailed
 
