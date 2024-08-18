@@ -6,15 +6,19 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from .models import User
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError,InvalidToken
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.reverse import reverse
 from django.conf import settings
 import jwt
+from rest_framework.permissions import AllowAny
+from rest_framework.authentication import BasicAuthentication
 
 class UserLoginView(APIView):
+    authentication_classes = []  # No authentication required
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -27,6 +31,8 @@ class UserLoginView(APIView):
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserRegistrationView(APIView):
+    authentication_classes = []  # no authentication
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -42,6 +48,7 @@ class UserRegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def verify_registered_user(request, token):
     try:
         decoded_token = AccessToken(token)

@@ -24,6 +24,9 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('api/', include('user.urls')),
+    
     # path('verify-token/<str:token>/', views.verify_registered_user),
+    path('api/', include('notes.urls')),
+    path('api/', include('user.urls',)),
+    
 ]
