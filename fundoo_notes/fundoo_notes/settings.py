@@ -9,11 +9,12 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+from pathlib import Path
 import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv(dotenv_path='.env')
 
@@ -190,3 +191,24 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+
+
+LOG_DIR = Path('C:/Users/siddharth/Desktop/Infostretch/django/logs')
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGURU_SETTINGS = {
+    "handlers": [
+        {
+            "sink": LOG_DIR / "error.log",  # Using Path to define the log file path
+            "level": "ERROR",
+            "format": "{time} - {level} - {message}",
+            "rotation": "10 MB",
+            "compression": "zip",
+            "serialize": False
+        },
+    ],
+}
+
+# Apply the Loguru settings
+for handler in LOGURU_SETTINGS["handlers"]:
+    logger.add(**handler)
