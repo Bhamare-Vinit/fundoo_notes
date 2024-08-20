@@ -28,5 +28,6 @@ urlpatterns = [
     # path('verify-token/<str:token>/', views.verify_registered_user),
     path('api/', include('notes.urls')),
     path('api/', include('user.urls',)),
+    path('api/', include('label.url')),
     
 ]

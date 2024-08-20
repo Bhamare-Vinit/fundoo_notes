@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "user",
     'notes',
     'rest_framework_simplejwt',
+    'label'
 ]
 
 MIDDLEWARE = [
@@ -192,7 +193,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-
 LOG_DIR = Path('C:/Users/siddharth/Desktop/Infostretch/django/logs')
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -206,6 +206,14 @@ LOGURU_SETTINGS = {
             "compression": "zip",
             "serialize": False
         },
+        # {
+        #     "sink": LOG_DIR / "label_error.log",  # New log file specifically for label errors
+        #     "level": "ERROR",
+        #     "format": "{time} - {level} - {message}",
+        #     "rotation": "10 MB",
+        #     "compression": "zip",
+        #     "serialize": False
+        # },
     ],
 }
 
