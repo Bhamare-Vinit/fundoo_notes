@@ -206,17 +206,20 @@ LOGURU_SETTINGS = {
             "compression": "zip",
             "serialize": False
         },
-        # {
-        #     "sink": LOG_DIR / "label_error.log",  # New log file specifically for label errors
-        #     "level": "ERROR",
-        #     "format": "{time} - {level} - {message}",
-        #     "rotation": "10 MB",
-        #     "compression": "zip",
-        #     "serialize": False
-        # },
     ],
 }
 
 # Apply the Loguru settings
 for handler in LOGURU_SETTINGS["handlers"]:
     logger.add(**handler)
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6380/1',  # Use the correct Redis server address and port
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+    }
+}

@@ -8,13 +8,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, ValidationError,PermissionDenied
 from django.core.exceptions import PermissionDenied
 from rest_framework.decorators import action
+from .utils.redis_utils import RedisUtils
 
 class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
     # permission_classes = [IsAuthenticated]
-
     # authentication_classes=[]
+    redis=RedisUtils()
 
     def get_queryset(self):
         return Note.objects.filter(user=self.request.user)
@@ -24,33 +25,148 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         try:
-            queryset = self.get_queryset().filter(is_archive=False, is_trash=False)
-            serializer = self.get_serializer(queryset, many=True)
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+
+                filtered_notes = [
+                    note for note in cached_notes
+                    if not note['is_archive'] and not note['is_trash']
+                ]
+
+                return Response({
+                    "message": "Notes retrieved from cache.",
+                    "data": filtered_notes
+                }, status=status.HTTP_200_OK)
+
+            notes = self.get_queryset()
+            serializer = self.get_serializer(notes, many=True)
+
+            self.redis.save(cache_key, serializer.data, ex=3600)
+
+            filtered_notes = [
+                note for note in serializer.data
+                if not note['is_archive'] and not note['is_trash']
+            ]
+
             return Response({
-                'user': request.user.email,
-                'message': 'Notes retrieved successfully.',
-                'data': serializer.data
+                "message": "Notes retrieved successfully.",
+                "data": filtered_notes
             }, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.error(f"Error in list method: {e}")
             return Response({
-                'user': request.user.email,
-                'error': 'An error occurred while retrieving notes.',
-                'detail': str(e)
+                "error": "An error occurred while retrieving notes.",
+                "detail": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
+        
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # self.perform_create(serializer)
+
             serializer.save(user=request.user)
+
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+                cached_notes.append(serializer.data)
+                self.redis.save(cache_key, cached_notes, ex=3600)
+            else:
+                self.redis.save(cache_key, [serializer.data], ex=3600)
+
+            headers = self.get_success_headers(serializer.data)
+            return Response({
+                "message": "Note created successfully.",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED, headers=headers)
+
+        except Exception as e:
+            logger.error(f"Error in create method: {e}")
+            return Response({
+                "error": "An error occurred while creating the note.",
+                "detail": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        try:
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+            print(f"cached_notes: {cached_notes}")
+
+            if cached_notes:
+                for note in cached_notes:
+                    if note['id'] == int(pk):
+                        print(f"note: {note}")
+                        return Response({
+                            'user': request.user.email,
+                            'message': 'Note retrieved successfully from cache.',
+                            'data': note
+                        }, status=status.HTTP_200_OK)
+                
+                logger.error(f"Note with ID: {pk} not found in cache for user: {request.user.email}")
+                return Response({
+                    'user': request.user.email,
+                    'error': 'Note not found in cache.',
+                    'detail': f'The note with ID {pk} does not exist in the cache.'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            
+            all_notes = self.get_serializer(self.get_queryset(), many=True).data
+            self.redis.save(cache_key, all_notes, ex=3600)
+
+            return Response({
+                'user': request.user.email,
+                'message': 'Note retrieved successfully.',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except NotFound:
+            logger.error(f"Note with ID: {pk} not found for user: {request.user.email}")
+            return Response({
+                'user': request.user.email,
+                'error': 'Note not found.',
+                'detail': 'The note with the provided ID does not exist.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"An error occurred while retrieving note with ID: {pk} for user: {request.user.email}. Error: {str(e)}")
+            return Response({
+                'user': request.user.email,
+                'error': 'An error occurred while retrieving the note.',
+                'detail': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+                for index, note in enumerate(cached_notes):
+                    if note['id'] == instance.id:
+                        cached_notes[index] = serializer.data
+                        print("cache updated")
+                        break
+
+                self.redis.save(cache_key, cached_notes, ex=3600)
+
             headers = self.get_success_headers(serializer.data)
             return Response({
                 'user': request.user.email,
-                'message': 'Note created successfully.',
+                'message': 'Note updated successfully.',
                 'data': serializer.data
-            }, status=status.HTTP_201_CREATED, headers=headers)
+            }, status=status.HTTP_200_OK, headers=headers)
         except ValidationError as e:
             logger.error("Validation failed for user: {}. Error: {}", request.user.email, e.detail)
             return Response({
@@ -59,136 +175,46 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'detail': e.detail
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error("An error occurred while creating the note for user: {}. Error: {}", request.user.email, str(e))
-            return Response({
-                'user': request.user.email,
-                'error': 'An error occurred while creating the note.',
-                'detail': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-    def retrieve(self, request, pk=None, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response({
-                'user': request.user.email,
-                'message': 'Note retrieved successfully.',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        except NotFound:
-            logger.error("Note with ID: {} not found for user: {}", pk, request.user.email)
-            return Response({
-                'user': request.user.email,
-                'error': 'Note not found.',
-                'detail': 'The note with the provided ID does not exist.'
-            }, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            logger.error("An error occurred while retrieving note with ID: {} for user: {}. Error: {}", pk, request.user.email, str(e))
-            return Response({
-                'user': request.user.email,
-                'error': 'An error occurred while retrieving the note.',
-                'detail': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None, *args, **kwargs):
-        partial = False
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=partial)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response({
-                'user': request.user.email,
-                'message': 'Note updated successfully.',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        except ValidationError as e:
-            logger.error(f"Validation failed: {e.detail}")
-            return Response({
-                'user': request.user.email,
-                'error': 'Validation failed.',
-                'detail': e.detail
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except NotFound:
-            logger.error(f"Note not found for user: {request.user.email}")
-            return Response({
-                'user': request.user.email,
-                'error': 'Note not found.',
-                'detail': 'The note with the provided ID does not exist.'
-            }, status=status.HTTP_404_NOT_FOUND)
-        except PermissionDenied as e:
-            logger.error(f"Permission denied: {str(e)}")
-            return Response({
-                'user': request.user.email,
-                'error': 'Permission denied.',
-                'detail': str(e)
-            }, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            logger.error(f"An error occurred while updating the note: {str(e)}")
+            logger.error("An error occurred while updating the note for user: {}. Error: {}", request.user.email, str(e))
             return Response({
                 'user': request.user.email,
                 'error': 'An error occurred while updating the note.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-    def partial_update(self, request, pk=None, *args, **kwargs):
-        partial = True
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=partial)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response({
-                'user': request.user.email,
-                'message': 'Note partially updated successfully.',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        except ValidationError as e:
-            return Response({
-                'user': request.user.email,
-                'error': 'Validation failed.',
-                'detail': e.detail
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except NotFound:
-            return Response({
-                'user': request.user.email,
-                'error': 'Note not found.',
-                'detail': 'The note with the provided ID does not exist.'
-            }, status=status.HTTP_404_NOT_FOUND)
-        except PermissionDenied as e:
-            return Response({
-                'user': request.user.email,
-                'error': 'Permission denied.',
-                'detail': str(e)
-            }, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            return Response({
-                'user': request.user.email,
-                'error': 'An error occurred while partially updating the note.',
-                'detail': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+ 
 
     def destroy(self, request, pk=None, *args, **kwargs):
         try:
             instance = self.get_object()
             self.perform_destroy(instance)
+
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+                updated_cache_notes = []
+                for note in cached_notes:
+                    if note['id'] != int(pk):
+                        updated_cache_notes.append(note)
+                        print(f"Cache Updated: {updated_cache_notes}")
+                
+                self.redis.save(cache_key, updated_cache_notes, ex=3600)
+
             return Response({
                 'user': request.user.email,
                 'message': 'Note deleted successfully.'
             }, status=status.HTTP_204_NO_CONTENT)
+            
         except NotFound:
+            logger.error(f"Note with ID {pk} not found for user {request.user.email}.")
             return Response({
                 'user': request.user.email,
                 'error': 'Note not found.',
                 'detail': 'The note with the provided ID does not exist.'
             }, status=status.HTTP_404_NOT_FOUND)
-        except PermissionDenied as e:
-            return Response({
-                'user': request.user.email,
-                'error': 'Permission denied.',
-                'detail': str(e)
-            }, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
+            logger.error(f"An error occurred while deleting note with ID {pk} for user {request.user.email}: {str(e)}")
             return Response({
                 'user': request.user.email,
                 'error': 'An error occurred while deleting the note.',
@@ -199,22 +225,36 @@ class NoteViewSet(viewsets.ModelViewSet):
     def toggle_archive(self, request, pk=None):
         try:
             note = self.get_object()
+
             note.is_archive = not note.is_archive
             note.save()
+
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+            print(f"cashed toggle:{cached_notes}")
+
+            if cached_notes:
+                for cached_note in cached_notes:
+                    if cached_note['id'] == note.id:
+                        cached_note['is_archive'] = note.is_archive
+                        print("cache updated toggle archive")
+                        break
+                self.redis.save(cache_key, cached_notes, ex=3600)
+
             return Response({
                 'user': request.user.email,
                 'message': 'Note archive status toggled successfully.',
                 'data': NoteSerializer(note).data
             }, status=status.HTTP_200_OK)
         except NotFound:
-            logger.error(f"Note not found for user: {request.user.email}")
+            logger.error(f"Note with ID {pk} not found for user {request.user.email}.")
             return Response({
                 'user': request.user.email,
                 'error': 'Note not found.',
                 'detail': 'The note with the provided ID does not exist.'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.error(f"An error occurred while deleting the note: {str(e)}")
+            logger.error(f"An error occurred while toggling archive status for note with ID {pk} for user {request.user.email}: {str(e)}")
             return Response({
                 'user': request.user.email,
                 'error': 'An error occurred while toggling the archive status.',
@@ -224,8 +264,23 @@ class NoteViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='archived_notes', permission_classes=[IsAuthenticated])
     def archived_notes(self, request):
         try:
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+            print(f"Archived Notes:{cached_notes}")
+
+            if cached_notes:
+                archived_notes = [note for note in cached_notes if note.get('is_archive', False)]
+                print(f"aechived notes:{archived_notes}")
+                return Response({
+                    'user': request.user.email,
+                    'message': 'Archived notes retrieved successfully from cache.',
+                    'data': archived_notes
+                }, status=status.HTTP_200_OK)
+            
             queryset = Note.objects.filter(user=request.user, is_archive=True)
             serializer = self.get_serializer(queryset, many=True)
+            self.redis.save(cache_key, serializer.data, ex=3600)
+            
             return Response({
                 'user': request.user.email,
                 'message': 'Archived notes retrieved successfully.',
@@ -245,6 +300,22 @@ class NoteViewSet(viewsets.ModelViewSet):
             note = self.get_object()
             note.is_trash = not note.is_trash
             note.save()
+
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+                updated_note_data = NoteSerializer(note).data
+                updated_notes = [
+                    updated_note_data if n['id'] == note.id else n
+                    for n in cached_notes
+                ]
+                self.redis.save(cache_key, updated_notes, ex=3600)
+                print("Toggle trash")
+            else:
+                queryset = self.get_queryset().filter(is_archive=False, is_trash=False)
+                self.redis.save(cache_key, self.get_serializer(queryset, many=True).data, ex=300)
+
             return Response({
                 'user': request.user.email,
                 'message': 'Note trash status toggled successfully.',
@@ -268,8 +339,22 @@ class NoteViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='trashed_notes')
     def trashed_notes(self, request):
         try:
-            queryset = Note.objects.filter(user=request.user, is_trash=True)
+            cache_key = f"user_{request.user.id}"
+            cached_notes = self.redis.get(cache_key)
+
+            if cached_notes:
+                
+                trashed_notes = [note for note in cached_notes if note.get('is_trash', False)]
+                return Response({
+                    'user': request.user.email,
+                    'message': 'Trashed notes retrieved successfully from cache.',
+                    'data': trashed_notes
+                }, status=status.HTTP_200_OK)
+            
+            queryset = self.get_queryset().filter(is_trash=True)
             serializer = self.get_serializer(queryset, many=True)
+
+            self.redis.save(cache_key, serializer.data, ex=3600)
             return Response({
                 'user': request.user.email,
                 'message': 'Trashed notes retrieved successfully.',
@@ -282,7 +367,6 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while retrieving trashed notes.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-        
     
 
 
