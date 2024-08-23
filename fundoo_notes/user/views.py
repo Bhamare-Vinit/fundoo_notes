@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.reverse import reverse
 from django.conf import settings
 import jwt
+from .tasks import send_verification_email
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BasicAuthentication
 
@@ -30,6 +31,7 @@ class UserLoginView(APIView):
             # return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from .tasks import send_verification_email
 class UserRegistrationView(APIView):
     authentication_classes = []  # no authentication
     permission_classes = [AllowAny]
@@ -43,7 +45,7 @@ class UserRegistrationView(APIView):
             message=f"Hi {serializer.data['first_name']} {serializer.data['last_name']}, thank you for registering.\n Click:\n{link}"
             from_email='vinitbhamare2002@gmail.com'
             to_email=serializer.data['email']
-            send_mail(subject, message, from_email, [to_email])
+            send_verification_email.delay(subject, message,from_email , to_email)
             return Response({'message': 'Registration successful','data':{'refresh': str(token), 'access': str(token.access_token)}}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

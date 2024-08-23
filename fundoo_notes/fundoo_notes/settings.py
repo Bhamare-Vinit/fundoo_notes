@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     "user",
     'notes',
     'rest_framework_simplejwt',
-    'label'
+    'label',
+    "django_celery_results",
 ]
 
 MIDDLEWARE = [
@@ -176,10 +177,10 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-EMAIL_HOST = 'smtp.mailtrap.io'
+EMAIL_HOST =os.environ.get('host')
 EMAIL_HOST_USER = os.environ.get('user') 
 EMAIL_HOST_PASSWORD = os.environ.get('pass') 
-EMAIL_PORT = '2525'
+EMAIL_PORT = os.environ.get('port')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 
@@ -217,9 +218,17 @@ for handler in LOGURU_SETTINGS["handlers"]:
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6380/1',  # Use the correct Redis server address and port
+        'LOCATION':os.environ.get('location'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
     }
 }
+
+CELERY_BROKER_URL =os.environ.get('broker_url')
+CELERY_RESULT_BACKEND =os.environ.get('result_backend')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER ='json'
+CELERY_RESULT_SERIALIZER ='json'
+CELERY_TIMEZONE = 'UTC'
+
