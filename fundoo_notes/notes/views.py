@@ -1,6 +1,8 @@
 from loguru import logger
 from rest_framework import viewsets
 from rest_framework.response import Response
+
+
 from rest_framework import status
 from .models import Note
 from .serializers import NoteSerializer
@@ -9,6 +11,11 @@ from rest_framework.exceptions import NotFound, ValidationError,PermissionDenied
 from django.core.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from .utils.redis_utils import RedisUtils
+import json
+from django_celery_beat.models import PeriodicTask, CrontabSchedule
+from django.utils.timezone import localtime
+from .tasks import send_reminder_email
+import pytz
 
 class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.all()
@@ -67,7 +74,8 @@ class NoteViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            serializer.save(user=request.user)
+            note=serializer.save(user=request.user)
+            print(f"note={note}")
 
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
@@ -77,7 +85,25 @@ class NoteViewSet(viewsets.ModelViewSet):
                 self.redis.save(cache_key, cached_notes, ex=3600)
             else:
                 self.redis.save(cache_key, [serializer.data], ex=3600)
+            print(f"note:{note}, type={type(note)}")
+            print(f"note.reminder = {note.reminder}")
+            print(f"note.id ={note.id}")
 
+            if note.reminder:
+                reminder_time = note.reminder
+                schedule, created = CrontabSchedule.objects.get_or_create(
+                    minute=str(reminder_time.minute),
+                    hour=str(reminder_time.hour),
+                    day_of_month=str(reminder_time.day),
+                    month_of_year=str(reminder_time.month),
+                    day_of_week='*',
+                )
+                PeriodicTask.objects.create(
+                    crontab=schedule,
+                    name=f"send_reminder_email_{note.id}",
+                    task='notes.tasks.send_reminder_email',
+                    args=json.dumps([note.title,note.description,note.user.email]),
+                )
             headers = self.get_success_headers(serializer.data)
             return Response({
                 "message": "Note created successfully.",
@@ -147,7 +173,7 @@ class NoteViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=request.data, partial=partial)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            note=serializer.save()
 
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
@@ -160,7 +186,37 @@ class NoteViewSet(viewsets.ModelViewSet):
                         break
 
                 self.redis.save(cache_key, cached_notes, ex=3600)
+            print("good till now")
+            print("note.reminder = note",instance.reminder)
+            if instance.reminder:
 
+            # Delete the old periodic task
+                update_task=PeriodicTask.objects.filter(name=f"send_reminder_email_{instance.id}")
+            
+                # Create or update the CrontabSchedule
+                schedule, created = CrontabSchedule.objects.get_or_create(
+                    minute=instance.reminder.minute,
+                    hour=instance.reminder.hour,
+                    day_of_month=instance.reminder.day,
+                    month_of_year=instance.reminder.month,
+                    day_of_week='*',
+                )
+                if not update_task.exists():
+                    print("nhi he")
+                    PeriodicTask.objects.create(
+                        crontab=schedule,
+                        name=f"send_reminder_email_{instance.id}",
+                        task='notes.tasks.send_reminder_email',
+                        args=json.dumps([instance.title,instance.description,instance.user.email]),
+                    )
+                else:
+                    print("kuchh to ho000000")
+                    update_task = update_task.first()
+                    # update_task.update(crontab=schedule)
+                    # update_task.schedule = schedule
+                    # update_task.save()
+                    update_task.crontab = schedule
+                    update_task.save()
             headers = self.get_success_headers(serializer.data)
             return Response({
                 'user': request.user.email,
