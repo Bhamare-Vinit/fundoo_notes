@@ -11,6 +11,7 @@ class Note(models.Model):
     is_trash = models.BooleanField(default=False, db_index=True)
     reminder = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notes')
+    # collaborator = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='note_collaborator') #collaborator
     class Meta:
         db_table = 'note'
 

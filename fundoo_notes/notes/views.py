@@ -1,8 +1,6 @@
 from loguru import logger
 from rest_framework import viewsets
 from rest_framework.response import Response
-
-
 from rest_framework import status
 from .models import Note
 from .serializers import NoteSerializer
@@ -15,9 +13,12 @@ import json
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.timezone import localtime
 from .tasks import send_reminder_email
-import pytz
+from drf_yasg.utils import swagger_auto_schema
 
 class NoteViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Note instances with caching and task scheduling.
+    """
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
     # permission_classes = [IsAuthenticated]
@@ -25,12 +26,22 @@ class NoteViewSet(viewsets.ModelViewSet):
     redis=RedisUtils()
 
     def get_queryset(self):
+
         return Note.objects.filter(user=self.request.user)
     
     # def perform_create(self, serializer):
     #     serializer.save(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
+        """
+        List all notes for the current user.
+
+        Parameters:
+        - request: The HTTP request object.
+
+        Return:
+        - Response: JSON response with list of notes.
+        """
         try:
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
@@ -69,7 +80,18 @@ class NoteViewSet(viewsets.ModelViewSet):
                 "detail": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
         
+    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})
     def create(self, request, *args, **kwargs):
+        """
+        Create a new note and schedule reminder tasks.
+
+        Parameters:
+        - request: The HTTP request object with note data.
+
+        Return:
+        - Response: JSON response with created note details.
+        """
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -118,6 +140,16 @@ class NoteViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None, *args, **kwargs):
+        """
+        Retrieve a specific note by ID.
+
+        Parameters:
+        - request: The HTTP request object.
+        - pk: The ID of the note to retrieve.
+
+        Return:
+        - Response: JSON response with note details.
+        """
         try:
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
@@ -167,7 +199,18 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})
     def update(self, request, *args, **kwargs):
+        """
+        Update an existing note.
+
+        Parameters:
+        - request: The HTTP request object with updated note data.
+
+        Return:
+        - Response: JSON response with updated note details.
+        """
         try:
             partial = kwargs.pop('partial', False)
             instance = self.get_object()
@@ -239,8 +282,19 @@ class NoteViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
  
-
+    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})
     def destroy(self, request, pk=None, *args, **kwargs):
+        """
+        Delete a note by ID.
+
+        Parameters:
+        - request: The HTTP request object.
+        - pk: The ID of the note to delete.
+
+        Return:
+        - Response: Confirmation of deletion.
+        """
         try:
             instance = self.get_object()
             self.perform_destroy(instance)
@@ -277,8 +331,20 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
         
+    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})
     @action(detail=True, methods=['patch'], url_path='toggle_archive', permission_classes=[IsAuthenticated])
     def toggle_archive(self, request, pk=None):
+        """
+        Toggle the archive status of a note.
+
+        Parameters:
+        - request: The HTTP request object.
+        - pk: The ID of the note to update.
+
+        Return:
+        - Response: JSON response with updated note details.
+        """
         try:
             note = self.get_object()
 
@@ -316,9 +382,18 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while toggling the archive status.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+  
     @action(detail=False, methods=['get'], url_path='archived_notes', permission_classes=[IsAuthenticated])
     def archived_notes(self, request):
+        """
+        List all archived notes for the current user.
+
+        Parameters:
+        - request: The HTTP request object.
+
+        Return:
+        - Response: JSON response with archived notes.
+        """
         try:
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
@@ -349,9 +424,20 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while retrieving archived notes.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})    
     @action(detail=True, methods=['patch'], url_path='toggle_trash', permission_classes=[IsAuthenticated])
     def toggle_trash(self, request, pk=None):
+        """
+        Toggle the trash status of a note.
+
+        Parameters:
+        - request: The HTTP request object.
+        - pk: The ID of the note to update.
+
+        Return:
+        - Response: JSON response with updated note details.
+        """
         try:
             note = self.get_object()
             note.is_trash = not note.is_trash
@@ -391,9 +477,18 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while toggling the trash status.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+   
     @action(detail=False, methods=['get'], url_path='trashed_notes')
     def trashed_notes(self, request):
+        """
+        List all trashed notes for the current user.
+
+        Parameters:
+        - request: The HTTP request object.
+
+        Return:
+        - Response: JSON response with trashed notes.
+        """
         try:
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)

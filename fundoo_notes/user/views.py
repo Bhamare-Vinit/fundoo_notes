@@ -16,10 +16,24 @@ from django.conf import settings
 import jwt
 from .tasks import send_verification_email
 from rest_framework.permissions import AllowAny
+from drf_yasg.utils import swagger_auto_schema
 
 class UserLoginView(APIView):
+    """
+    Description:
+    Handles user login by validating credentials and returning a JWT token if successful.
+
+    Parameters:
+    - request: Contains user credentials (email and password).
+
+    Return:
+    - A success response with user data and a JWT token.
+    - An error response if login fails or an exception occurs.
+    """
     authentication_classes = []  # No authentication required
     permission_classes = [AllowAny]
+    @swagger_auto_schema(operation_description="user login",request_body=UserLoginSerializer, responses={200: UserLoginSerializer})
+    
     def post(self, request):
         try:
             serializer = UserLoginSerializer(data=request.data)
@@ -60,8 +74,22 @@ class UserLoginView(APIView):
 
 from .tasks import send_verification_email
 class UserRegistrationView(APIView):
+    """
+    Description:
+    Handles user registration, saves the user's data, and sends a verification email.
+
+    Parameters:
+    - request: Contains user registration details.
+
+    Return:
+    - A success response with user data if registration is successful.
+    - An error response if registration fails or an exception occurs.
+    """
     authentication_classes = []  # no authentication
     permission_classes = [AllowAny]
+    @swagger_auto_schema(operation_description="user register",request_body=UserRegistrationSerializer, responses={201: UserRegistrationSerializer,400: "Bad Request: Invalid input data.",
+            500: "Internal Server Error: An error occurred during registration."})
+
     def post(self, request):
         try:
             serializer = UserRegistrationSerializer(data=request.data)
@@ -112,8 +140,21 @@ class UserRegistrationView(APIView):
             )
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+# @permission_classes([AllowAny])
+
 def verify_registered_user(request, token):
+    """
+    Description:
+    Verifies a user's account by decoding the JWT token and marking the user as verified.
+
+    Parameters:
+    - request: The HTTP request object.
+    - token: The JWT token for user verification.
+
+    Return:
+    - A success response if the token is valid.
+    - An error response if the token is invalid or expired.
+    """
     try:
         decoded_token = AccessToken(token)
         print(decoded_token)

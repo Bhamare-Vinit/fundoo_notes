@@ -9,6 +9,17 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 @shared_task(bind=True)
 def send_reminder_email(self,title,description,email):
+    """
+    Send a reminder email.
+
+    Parameters:
+    - title (str): The title of the note.
+    - description (str): The description of the note.
+    - email (str): The recipient's email address.
+
+    Return:
+    - None
+    """
     try:
         # note = Note.objects.get(id=note_id)
         # print(f"note = {note}")

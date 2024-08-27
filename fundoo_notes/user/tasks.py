@@ -8,6 +8,19 @@ logger = get_task_logger(__name__)
 
 @shared_task
 def send_verification_email(subject, message,from_email, to_email):
+    """
+    Description:
+    Sends a verification email to the specified recipient.
+
+    Parameters:
+    - subject: The subject of the email.
+    - message: The body of the email.
+    - from_email: The sender's email address.
+    - to_email: The recipient's email address.
+
+    Return:
+    - None: Logs any errors if the email fails to send.
+    """
     try:
         send_mail(subject, message, from_email, [to_email])
     except BadHeaderError:

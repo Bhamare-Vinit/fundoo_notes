@@ -1,3 +1,11 @@
+'''
+@Author: Vinit Gorakhnath Bhamare
+@Date: 2024-08-16 13:58:30
+@Last Modified by: Vinit Gorakhnath Bhamare
+@Last Modified time: 2024-08-26 18:00:30
+@Title : Fundoo Notes Celery
+'''
+
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
