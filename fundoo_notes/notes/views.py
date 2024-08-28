@@ -10,10 +10,21 @@ from django.core.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from .utils.redis_utils import RedisUtils
 import json
+from drf_yasg import openapi
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.timezone import localtime
 from .tasks import send_reminder_email
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from .models import Note, Collaborator
+from .serializers import CollaboratorSerializer
+from django.db.models import Q
+from label.models import Label
+
+User = get_user_model()
 
 class NoteViewSet(viewsets.ModelViewSet):
     """
@@ -26,8 +37,8 @@ class NoteViewSet(viewsets.ModelViewSet):
     redis=RedisUtils()
 
     def get_queryset(self):
-
-        return Note.objects.filter(user=self.request.user)
+        lookup=Q(user=self.request.user)|Q(collaborator__id=self.request.user.id)
+        return Note.objects.filter(lookup).distinct('id')
     
     # def perform_create(self, serializer):
     #     serializer.save(user=self.request.user)
@@ -58,19 +69,18 @@ class NoteViewSet(viewsets.ModelViewSet):
                     "data": filtered_notes
                 }, status=status.HTTP_200_OK)
 
-            notes = self.get_queryset()
+            notes = self.get_queryset().filter(is_archive=False, is_trash=False)
             serializer = self.get_serializer(notes, many=True)
 
             self.redis.save(cache_key, serializer.data, ex=3600)
 
-            filtered_notes = [
-                note for note in serializer.data
-                if not note['is_archive'] and not note['is_trash']
-            ]
-
+            # filtered_notes = [
+            #     note for note in serializer.data
+            #     if not note['is_archive'] and not note['is_trash']
+            # ]
             return Response({
                 "message": "Notes retrieved successfully.",
-                "data": filtered_notes
+                "data": serializer.data
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -95,6 +105,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+
 
             note=serializer.save(user=request.user)
             print(f"note={note}")
@@ -199,7 +210,7 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+    @swagger_auto_schema(operation_description="update note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
             500: "Internal Server Error: An error occurred during registration."})
     def update(self, request, *args, **kwargs):
         """
@@ -214,6 +225,13 @@ class NoteViewSet(viewsets.ModelViewSet):
         try:
             partial = kwargs.pop('partial', False)
             instance = self.get_object()
+            if instance.user != request.user:
+                collaborator = Collaborator.objects.filter(note=instance, user=request.user).first()
+                if not collaborator or collaborator.access_type != Collaborator.READ_WRITE:
+                    return Response({
+                        'user': request.user.email,
+                        'error': 'You do not have permission to update this note.'
+                    }, status=status.HTTP_403_FORBIDDEN)
             serializer = self.get_serializer(instance, data=request.data, partial=partial)
             serializer.is_valid(raise_exception=True)
             note=serializer.save()
@@ -227,16 +245,11 @@ class NoteViewSet(viewsets.ModelViewSet):
                         cached_notes[index] = serializer.data
                         print("cache updated")
                         break
-
                 self.redis.save(cache_key, cached_notes, ex=3600)
-            print("good till now")
-            print("note.reminder = note",instance.reminder)
+                
             if instance.reminder:
-
-            # Delete the old periodic task
                 update_task=PeriodicTask.objects.filter(name=f"send_reminder_email_{instance.id}")
-            
-                # Create or update the CrontabSchedule
+                
                 schedule, created = CrontabSchedule.objects.get_or_create(
                     minute=instance.reminder.minute,
                     hour=instance.reminder.hour,
@@ -282,7 +295,7 @@ class NoteViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
  
-    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+    @swagger_auto_schema(operation_description="Delete note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
             500: "Internal Server Error: An error occurred during registration."})
     def destroy(self, request, pk=None, *args, **kwargs):
         """
@@ -297,6 +310,13 @@ class NoteViewSet(viewsets.ModelViewSet):
         """
         try:
             instance = self.get_object()
+            if instance.user != request.user:
+                collaborator = Collaborator.objects.filter(note=instance, user=request.user).first()
+                if not collaborator or collaborator.access_type != Collaborator.READ_WRITE:
+                    return Response({
+                        'user': request.user.email,
+                        'error': 'You do not have permission to update this note.'
+                    }, status=status.HTTP_403_FORBIDDEN)
             self.perform_destroy(instance)
 
             cache_key = f"user_{request.user.id}"
@@ -331,7 +351,7 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
         
-    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+    @swagger_auto_schema(operation_description="toggle archive",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
             500: "Internal Server Error: An error occurred during registration."})
     @action(detail=True, methods=['patch'], url_path='toggle_archive', permission_classes=[IsAuthenticated])
     def toggle_archive(self, request, pk=None):
@@ -347,6 +367,13 @@ class NoteViewSet(viewsets.ModelViewSet):
         """
         try:
             note = self.get_object()
+            if note.user != request.user:
+                collaborator = Collaborator.objects.filter(note=note, user=request.user).first()
+                if not collaborator or collaborator.access_type != Collaborator.READ_WRITE:
+                    return Response({
+                        'user': request.user.email,
+                        'error': 'You do not have permission to update this note.'
+                    }, status=status.HTTP_403_FORBIDDEN)
 
             note.is_archive = not note.is_archive
             note.save()
@@ -424,7 +451,8 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while retrieving archived notes.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-    @swagger_auto_schema(operation_description="Creation of note",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
+        
+    @swagger_auto_schema(operation_description="toggle trash",request_body=NoteSerializer, responses={201: NoteSerializer,400: "Bad Request: Invalid input data.",
             500: "Internal Server Error: An error occurred during registration."})    
     @action(detail=True, methods=['patch'], url_path='toggle_trash', permission_classes=[IsAuthenticated])
     def toggle_trash(self, request, pk=None):
@@ -440,6 +468,13 @@ class NoteViewSet(viewsets.ModelViewSet):
         """
         try:
             note = self.get_object()
+            if note.user != request.user:
+                collaborator = Collaborator.objects.filter(note=note, user=request.user).first()
+                if not collaborator or collaborator.access_type != Collaborator.READ_WRITE:
+                    return Response({
+                        'user': request.user.email,
+                        'error': 'You do not have permission to update this note.'
+                    }, status=status.HTTP_403_FORBIDDEN)
             note.is_trash = not note.is_trash
             note.save()
 
@@ -518,6 +553,199 @@ class NoteViewSet(viewsets.ModelViewSet):
                 'error': 'An error occurred while retrieving trashed notes.',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CollaboratorViewSet(viewsets.ViewSet):
+    queryset = Collaborator.objects.all()
+    serializer_class = CollaboratorSerializer
+
+    @swagger_auto_schema(
+        method='post',
+        operation_description="Add collaborators to a note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the note'),
+                'user_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description='List of user IDs to be added as collaborators'
+                ),
+                'access_type': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Access type for the collaborators (e.g., READ_ONLY, EDIT)',
+                    default=Collaborator.READ_ONLY
+                ),
+            },
+            required=['note_id', 'user_ids'],
+        ),
+        responses={
+            201: openapi.Response('Collaborators added successfully'),
+            400: openapi.Response('Bad request, invalid data'),
+            404: openapi.Response('Note not found'),
+        }
+    )
+    @action(detail=False, methods=['post'],url_path='add-collaborators')
+    def add_collaborators(self, request):
+        note_id = request.data.get('note_id')
+        user_ids = request.data.get('user_ids', [])
+        access_type = request.data.get('access_type', Collaborator.READ_ONLY)
+
+        try:
+            note = Note.objects.get(id=note_id)
+        except Note.DoesNotExist:
+            return Response({'error': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.id in user_ids:
+            return Response({'error': 'Note owner cannot be a collaborator'}, status=status.HTTP_400_BAD_REQUEST)
+        users = User.objects.filter(id__in=user_ids)
+        for user in users:
+            # user = User.objects.filter(id=user_id).first()
+            # if user:
+            serializer = CollaboratorSerializer(data={
+                'user': user.id,
+                'note': note_id,
+                'access_type': access_type
+            })
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Collaborators added successfully'}, status=status.HTTP_201_CREATED)
     
 
+    @swagger_auto_schema(
+        method='post',
+        operation_description="remove collaborators of note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the note'),
+                'user_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description='List of user IDs'
+                )
+            },
+            required=['note_id', 'user_ids'],
+        ),
+        responses={
+            201: openapi.Response('Collaborators added successfully'),
+            400: openapi.Response('Bad request, invalid data'),
+            404: openapi.Response('Note not found'),
+        }
+    )
+    @action(detail=False, methods=['post'],url_path='remove-collaborators')
+    def remove_collaborators(self, request):
+        note_id = request.data.get('note_id')
+        user_ids = request.data.get('user_ids', [])
 
+        note = Note.objects.filter(id=note_id).first()
+        if not note:
+            return Response({'error': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        Collaborator.objects.filter(note=note, user_id__in=user_ids).delete()
+
+        return Response({'message': 'Collaborators removed successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class NoteLabelViewSet(viewsets.ViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
+
+    @swagger_auto_schema(
+        method='post',
+        operation_description="Add Labels to note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the note'),
+                'label_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description='List of label IDs to be added to the note'
+                )
+            },
+            required=['note_id', 'label_ids'],
+        ),
+        responses={
+            201: openapi.Response('Collaborators added successfully'),
+            400: openapi.Response('Bad request, invalid data'),
+            404: openapi.Response('Note not found'),
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='add-labels')
+    def add_labels(self, request):
+        note_id = request.data.get('note_id')
+        label_ids = request.data.get('label_ids', [])
+
+        try:
+            note = Note.objects.get(id=note_id)
+            if note.user != request.user:
+                return Response({"error": "You are not the owner of this note."}, status=status.HTTP_403_FORBIDDEN)
+        except Note.DoesNotExist:
+            return Response({'error': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+        labels = Label.objects.filter(id__in=label_ids)
+            
+        if not labels:
+            return Response({"error": "Label not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        for label in labels:
+            if label.user.id != request.user.id:
+                return Response({"message":"Your not the owner of this label","status":"Error"},status=status.HTTP_403_FORBIDDEN)
+
+        note.label.add(*labels)
+        return Response({'message': 'Labels added successfully'}, status=status.HTTP_200_OK)
+    
+    @swagger_auto_schema(
+        method='post',
+        operation_description="remove Labels from note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the note'),
+                'label_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description='List of label IDs to be removed from the note'
+                )
+            },
+            required=['note_id', 'label_ids'],
+        ),
+        responses={
+            201: openapi.Response('Collaborators added successfully'),
+            400: openapi.Response('Bad request, invalid data'),
+            404: openapi.Response('Note not found'),
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='remove-labels')
+    def remove_labels(self, request):
+        note_id = request.data.get('note_id')
+        label_ids = request.data.get('label_ids', [])
+        try:
+            note = Note.objects.get(id=note_id)
+        except Note.DoesNotExist:
+            return Response({'error': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if note.user != request.user:
+            return Response({'error': 'You are not the owner of this note.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        labels = Label.objects.filter(id__in=label_ids)
+        if not labels:
+            return Response({"error": "Label not found"}, status=status.HTTP_404_NOT_FOUND)
+        for label in labels:
+            if label.user.id != request.user.id:
+                return Response({"message":"Your not the owner of this label","status":"Error"},status=status.HTTP_403_FORBIDDEN)
+        
+        for label_id in label_ids:
+            if not note.label.filter(id=label_id).exists():
+                return Response({'error': f'Label with id {label_id} is not assigned to this note.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        labels_to_remove = Label.objects.filter(id__in=label_ids)
+        note.label.remove(*labels_to_remove)
+
+        return Response({'message': 'Labels removed successfully'}, status=status.HTTP_200_OK)
+    

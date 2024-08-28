@@ -38,9 +38,11 @@ class UserLoginView(APIView):
         try:
             serializer = UserLoginSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-                # user = authenticate(request, email=serializer.validated_data['email'], password=serializer.validated_data['password'])
-                # if user:
-            serializer.save()
+            # user = authenticate(request, email=serializer.validated_data['email'], password=serializer.validated_data['password'])
+            # if user:
+            user = serializer.save()
+            if not user.is_verified:
+                return Response({"error": "User is not verified. Please verify your email to log in."}, status=status.HTTP_403_FORBIDDEN)
             token=RefreshToken.for_user(serializer.instance)
             user_data = {
                 'email': serializer.instance.email,
@@ -61,7 +63,6 @@ class UserLoginView(APIView):
                 },
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
         except Exception as e:
             return Response(
                 {
