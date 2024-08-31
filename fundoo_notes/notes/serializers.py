@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Note,Collaborator
-
+from label.models import Label
 class NoteSerializer(serializers.ModelSerializer):
     """
     Serializer for the Note model.
@@ -10,6 +10,7 @@ class NoteSerializer(serializers.ModelSerializer):
         fields (list): List of fields to include in the serialized representation.
         read_only_fields (tuple): Fields that are read-only and cannot be modified.
     """
+    # label = serializers.SerializerMethodField()
     class Meta:
         model = Note
         fields = [
@@ -19,8 +20,7 @@ class NoteSerializer(serializers.ModelSerializer):
             'user','label','collaborator'
         ]
         read_only_fields = ('user','label','collaborator')
-
-
+    
 class CollaboratorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collaborator

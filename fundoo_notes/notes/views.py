@@ -599,19 +599,22 @@ class CollaboratorViewSet(viewsets.ViewSet):
 
         if request.user.id in user_ids:
             return Response({'error': 'Note owner cannot be a collaborator'}, status=status.HTTP_400_BAD_REQUEST)
-        users = User.objects.filter(id__in=user_ids)
-        for user in users:
-            # user = User.objects.filter(id=user_id).first()
-            # if user:
-            serializer = CollaboratorSerializer(data={
-                'user': user.id,
-                'note': note_id,
-                'access_type': access_type
-            })
-            if serializer.is_valid():
-                serializer.save()
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            users = User.objects.filter(id__in=user_ids)
+            for user in users:
+                # user = User.objects.filter(id=user_id).first()
+                # if user:
+                serializer = CollaboratorSerializer(data={
+                    'user': user.id,
+                    'note': note_id,
+                    'access_type': access_type
+                })
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'message': 'Collaborators added successfully'}, status=status.HTTP_201_CREATED)
     
@@ -748,4 +751,6 @@ class NoteLabelViewSet(viewsets.ViewSet):
         note.label.remove(*labels_to_remove)
 
         return Response({'message': 'Labels removed successfully'}, status=status.HTTP_200_OK)
+    
+    
     

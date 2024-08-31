@@ -32,6 +32,16 @@ class Collaborator(models.Model):
     class Meta:
         unique_together = ('user', 'note')
 
+from django.db import models
+
+class Log(models.Model):
+    method = models.CharField(max_length=10, null=False)
+    url = models.TextField(null=False)
+    count = models.IntegerField(default=1)
+
+    class Meta:
+        db_table = 'Log'
+
 
 
 

@@ -141,7 +141,7 @@ class UserRegistrationView(APIView):
             )
 
 @api_view(["GET"])
-# @permission_classes([AllowAny])
+@permission_classes([AllowAny])#dont comment this line again
 
 def verify_registered_user(request, token):
     """
@@ -158,7 +158,7 @@ def verify_registered_user(request, token):
     """
     try:
         decoded_token = AccessToken(token)
-        print(decoded_token)
+        print(f"token decoded: {decoded_token}")
 
         # payload=jwt.decode(token,settings.SECRET_KEY,algorithms=["HS256"])
         user=User.objects.get(id=decoded_token['user_id'])
