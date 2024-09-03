@@ -192,6 +192,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/min',  # Rate limit for anonymous users (e.g., 100 requests per day).
+        'user': '100/min',  # Rate limit for authenticated users (e.g., 1000 requests per day).
+    }
 }
 
 LOG_DIR = Path('C:/Users/siddharth/Desktop/Infostretch/django/logs')
@@ -239,3 +247,15 @@ SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
     "SECURITY_DEFINITIONS": {"Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}},
 }
+
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_THROTTLE_CLASSES': [
+#         'rest_framework.throttling.AnonRateThrottle',
+#         'rest_framework.throttling.UserRateThrottle',
+#     ],
+#     'DEFAULT_THROTTLE_RATES': {
+#         'anon': '7/min',  # Rate limit for anonymous users (e.g., 100 requests per day).
+#         'user': '3/min',  # Rate limit for authenticated users (e.g., 1000 requests per day).
+#     }
+# }

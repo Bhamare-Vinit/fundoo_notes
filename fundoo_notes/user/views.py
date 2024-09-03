@@ -17,6 +17,7 @@ import jwt
 from .tasks import send_verification_email
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.exceptions import Throttled
 
 class UserLoginView(APIView):
     """
@@ -63,6 +64,8 @@ class UserLoginView(APIView):
                 },
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        except Throttled as e:
+            return Response({"error": "You have exceeded your request limit. Please try again later.",'data': {'error': str(e)}}, status=429)
         except Exception as e:
             return Response(
                 {
@@ -72,6 +75,7 @@ class UserLoginView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
 
 from .tasks import send_verification_email
 class UserRegistrationView(APIView):
