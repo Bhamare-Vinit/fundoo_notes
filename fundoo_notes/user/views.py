@@ -182,3 +182,93 @@ def verify_registered_user(request, token):
         return Response({
             'error': 'Token error or expired'
         }, status=400)
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout 
+
+
+# # Create your views here.
+# # Home page
+# def index(request):
+#     return render(request, 'index.html')
+
+# # signup page
+# def user_signup(request):
+#     if request.method == 'POST':
+#         form = SignupForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('login_page')
+#     else:
+#         form = SignupForm()
+#     return render(request, 'signup.html', {'form': form})
+
+# # login page
+# # def user_login(request):
+# #     if request.method == 'POST':
+# #         form = LoginForm(request.POST)
+# #         if form.is_valid():
+# #             username = form.cleaned_data['username']
+# #             password = form.cleaned_data['password']
+# #             user = authenticate(request, username=username, password=password)
+# #             if user:
+# #                 login(request, user)    
+# #                 return redirect('home')
+# #     else:
+# #         form = LoginForm()
+# #     return render(request, 'login.html', {'form': form})
+# def user_login(request):
+#     if request.method == 'POST':
+#         form = LoginForm(request.POST)
+#         if form.is_valid():
+#             email = form.cleaned_data['email']
+#             password = form.cleaned_data['password']
+#             user = authenticate(request, email=email, password=password)
+#             if user:
+#                 login(request, user)
+#                 return redirect('home')
+#             else:
+#                 form.add_error(None, "Invalid email or password")
+#     else:
+#         form = LoginForm()
+#     return render(request, 'login.html', {'form': form})
+
+# # logout page
+# def user_logout(request):
+#     logout(request)
+#     return redirect('login_page')
+
+from django.contrib.auth import authenticate, login, logout
+# from django.contrib.auth.models import User
+from .models import User
+from django.shortcuts import render, redirect
+
+def user_signup(request):
+    if request.method == 'POST':
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        email = request.POST['email']
+        password = request.POST['password']
+        User.objects.create_user(first_name=first_name, last_name=last_name, email=email, password=password)
+        return redirect('login_page')
+    return render(request, 'signup.html')
+
+def user_login(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+        user = authenticate(request, username=email, password=password)
+        if user:
+            login(request, user)
+            return redirect('profile')
+    return render(request, 'login.html')
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def user_profile(request):
+    return render(request, 'index.html', {'user': request.user})
+
+def user_logout(request):
+    logout(request)
+    return redirect('login_page')

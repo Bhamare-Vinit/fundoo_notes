@@ -344,8 +344,7 @@ class RawLabelView(
             # columns = [col[0] for col in cursor.description]
             # rows = cursor.fetchall()
             # labels = [dict(zip(columns, row)) for row in rows]
-            print(labels)
-            print("waka waka: ",[Label(**label) for label in labels])
+            
         return labels
     
     def perform_create(self, serializer):
@@ -501,8 +500,6 @@ class RawLabelView2(
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM label WHERE user_id = %s", [user_id])
             labels=dictfetchall(cursor)
-            print(labels)
-            print("waka waka: ",[Label(**label) for label in labels])
         return labels
 
     def perform_create(self, serializer):
