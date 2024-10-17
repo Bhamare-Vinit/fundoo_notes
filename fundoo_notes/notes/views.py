@@ -57,17 +57,17 @@ class NoteViewSet(viewsets.ModelViewSet):
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
 
-            if cached_notes:
+            # if cached_notes:
 
-                filtered_notes = [
-                    note for note in cached_notes
-                    if not note['is_archive'] and not note['is_trash']
-                ]
+            #     filtered_notes = [
+            #         note for note in cached_notes
+            #         if not note['is_archive'] and not note['is_trash']
+            #     ]
 
-                return Response({
-                    "message": "Notes retrieved from cache.",
-                    "data": filtered_notes
-                }, status=status.HTTP_200_OK)
+            #     return Response({
+            #         "message": "Notes retrieved from cache.",
+            #         "data": filtered_notes
+            #     }, status=status.HTTP_200_OK)
 
             notes = self.get_queryset().filter(is_archive=False, is_trash=False)
             serializer = self.get_serializer(notes, many=True)
@@ -426,14 +426,14 @@ class NoteViewSet(viewsets.ModelViewSet):
             cached_notes = self.redis.get(cache_key)
             print(f"Archived Notes:{cached_notes}")
 
-            if cached_notes:
-                archived_notes = [note for note in cached_notes if note.get('is_archive', False)]
-                print(f"aechived notes:{archived_notes}")
-                return Response({
-                    'user': request.user.email,
-                    'message': 'Archived notes retrieved successfully from cache.',
-                    'data': archived_notes
-                }, status=status.HTTP_200_OK)
+            # if cached_notes:
+            #     archived_notes = [note for note in cached_notes if note.get('is_archive', False)]
+            #     print(f"aechived notes:{archived_notes}")
+            #     return Response({
+            #         'user': request.user.email,
+            #         'message': 'Archived notes retrieved successfully from cache.',
+            #         'data': archived_notes
+            #     }, status=status.HTTP_200_OK)
             
             queryset = Note.objects.filter(user=request.user, is_archive=True)
             serializer = self.get_serializer(queryset, many=True)
@@ -528,14 +528,14 @@ class NoteViewSet(viewsets.ModelViewSet):
             cache_key = f"user_{request.user.id}"
             cached_notes = self.redis.get(cache_key)
 
-            if cached_notes:
+            # if cached_notes:
                 
-                trashed_notes = [note for note in cached_notes if note.get('is_trash', False)]
-                return Response({
-                    'user': request.user.email,
-                    'message': 'Trashed notes retrieved successfully from cache.',
-                    'data': trashed_notes
-                }, status=status.HTTP_200_OK)
+            #     trashed_notes = [note for note in cached_notes if note.get('is_trash', False)]
+            #     return Response({
+            #         'user': request.user.email,
+            #         'message': 'Trashed notes retrieved successfully from cache.',
+            #         'data': trashed_notes
+            #     }, status=status.HTTP_200_OK)
             
             queryset = self.get_queryset().filter(is_trash=True)
             serializer = self.get_serializer(queryset, many=True)

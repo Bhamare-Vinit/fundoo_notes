@@ -58,7 +58,6 @@ def generate_usertoken2(client, django_user_model):
 @pytest.mark.django_db
 @pytest.mark.note
 class TestNote:
-
 #-------------------------Create Note--------------------------------------------------------------
     def test_note_create(self,client,generate_usertoken):
         data = {
